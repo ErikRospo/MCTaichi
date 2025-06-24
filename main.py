@@ -19,6 +19,10 @@ camera_pos = np.array([0.0, 0.0, 3.0], dtype=np.float32)
 camera_pitch = 0.0
 camera_yaw = 0.0
 
+# Camera pitch limits
+CAMERA_PITCH_MIN = -np.pi / 2 + 0.01
+CAMERA_PITCH_MAX = np.pi / 2 - 0.01
+
 # Generate triangles (example: random triangles in front of camera)
 N_TRIANGLES = 2000
 
@@ -55,7 +59,7 @@ while dpg.is_dearpygui_running():
     last_current_time = current_time
     current_time = time.time() - start_time
 
-    # Calculate actual dt
+    # Calculate actual dt (delta time) for frame-independent movement
     dt = current_time - last_current_time
 
     # Poll keyboard state directly
@@ -68,7 +72,7 @@ while dpg.is_dearpygui_running():
         camera_pitch += LOOK_SENSITIVITY
     if dpg.is_key_down(dpg.mvKey_K):
         camera_pitch -= LOOK_SENSITIVITY
-    camera_pitch = np.clip(camera_pitch, -np.pi / 2 + 0.01, np.pi / 2 - 0.01)
+    camera_pitch = np.clip(camera_pitch, CAMERA_PITCH_MIN, CAMERA_PITCH_MAX)
 
     # Compute forward, right, and up vectors from camera orientation
     forward = np.array(
