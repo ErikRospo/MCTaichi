@@ -26,22 +26,29 @@ class Triangle:
     color: vec3
 
 @ti.func
-def transform_vector(ihat:vec3,jhat:vec3,khat:vec3,v:vec3)->vec3:
-    return v.x*ihat+v.y*jhat+khat*v
-@ti.func
-def get_basis_vectors(pitch:float,yaw:float):
-    ihat_yaw=vec3([ti.cos(yaw),0,ti.sin(yaw)])
-    jhat_yaw=vec3([0,1,0])
-    khat_yaw=vec3([ti.cos(yaw),0,ti.sin(yaw)])
-    
-    ihat_pitch=vec3([1,0,0])
-    jhat_pitch=vec3([0,ti.cos(yaw),-ti.sin(yaw)])
-    khat_pitch=vec3([0,ti.sin(yaw),ti.cos(yaw)])
-    
-    ihat=transform_vector(ihat_yaw,jhat_yaw,khat_yaw,ihat_pitch)
-    jhat=transform_vector(ihat_yaw,jhat_yaw,khat_yaw,jhat_pitch)
-    khat=transform_vector(ihat_yaw,jhat_yaw,khat_yaw,khat_pitch)
-    return (ihat,jhat,khat)
+def get_rotation_matrix(pitch: float, yaw: float):
+    # Yaw rotation (around y-axis)
+    cy = ti.cos(yaw)
+    sy = ti.sin(yaw)
+    # Pitch rotation (around x-axis)
+    cp = ti.cos(pitch)
+    sp = ti.sin(pitch)
+    # Combined rotation matrix (R = R_yaw * R_pitch)
+    # | cy    0   sy |   | 1   0    0 |
+    # | 0     1    0 | * | 0  cp  -sp |
+    # | -sy   0   cy |   | 0  sp   cp |
+    m00 = cy
+    m01 = sy * sp
+    m02 = sy * cp
+    m10 = 0.0
+    m11 = cp
+    m12 = -sp
+    m20 = -sy
+    m21 = cy * sp
+    m22 = cy * cp
+    return ti.Matrix([[m00, m01, m02],
+                      [m10, m11, m12],
+                      [m20, m21, m22]])
 
     
 @ti.func
