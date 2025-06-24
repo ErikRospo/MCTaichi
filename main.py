@@ -35,13 +35,11 @@ def handle_key_down(sender, app_data):
 def handle_key_up(sender, app_data):
     controls.set_key(app_data, False)
 
-def handle_mouse_move(sender, app_data):
-    x, y = dpg.get_mouse_pos()
-    controls.update_mouse(x, y)
-
 
 dpg.create_context()
 dpg.create_viewport(title="MCTaichi", width=WIDTH + 20, height=HEIGHT + 80)
+dpg.show_metrics()
+
 dpg.setup_dearpygui()
 
 with dpg.handler_registry():
@@ -49,7 +47,6 @@ with dpg.handler_registry():
     dpg.add_mouse_release_handler(callback=handle_mouse_up)
     dpg.add_key_down_handler(callback=handle_key_down)
     dpg.add_key_release_handler(callback=handle_key_up)
-    dpg.add_mouse_move_handler(callback=handle_mouse_move)
 with dpg.texture_registry():
     texture_id = dpg.add_raw_texture(WIDTH, HEIGHT, np_img)
 
@@ -63,7 +60,7 @@ start_time = time.time()
 init_triangles()
 
 MOVE_SPEED = 2.0
-LOOK_SENSITIVITY = 0.002
+LOOK_SENSITIVITY = 0.03
 current_time=0.
 while dpg.is_dearpygui_running():
     last_current_time = current_time
@@ -103,11 +100,16 @@ while dpg.is_dearpygui_running():
         move = move / np.linalg.norm(move)
     camera_pos += move * MOVE_SPEED * dt
 
-    # Camera rotation
-    camera_yaw += controls.mouse_dx * LOOK_SENSITIVITY
-    camera_pitch += -controls.mouse_dy * LOOK_SENSITIVITY
+    # Camera rotation using IJKL
+    if controls.key_j:
+        camera_yaw -= LOOK_SENSITIVITY
+    if controls.key_l:
+        camera_yaw += LOOK_SENSITIVITY
+    if controls.key_i:
+        camera_pitch -= LOOK_SENSITIVITY
+    if controls.key_k:
+        camera_pitch += LOOK_SENSITIVITY
     camera_pitch = np.clip(camera_pitch, -np.pi/2 + 0.01, np.pi/2 - 0.01)
-    controls.reset_mouse_delta()
 
     render(current_time, camera_pos, camera_pitch, camera_yaw)
     img_np = img.to_numpy()

@@ -14,13 +14,11 @@ class Controls:
         self.key_d = False
         self.key_e = False
         self.key_q = False
-        # Mouse tracking
-        self.mouse_x = 0.0
-        self.mouse_y = 0.0
-        self.mouse_dx = 0.0
-        self.mouse_dy = 0.0
-        self._last_mouse_x = None
-        self._last_mouse_y = None
+        # Camera rotation keys
+        self.key_i = False
+        self.key_j = False
+        self.key_k = False
+        self.key_l = False
 
     def set_mb(self, button: Literal[0, 1, 2], state=True):
         if button == 0:
@@ -45,19 +43,11 @@ class Controls:
             self.key_e = state
         elif key == dpg.mvKey_Q:
             self.key_q = state
-
-    def update_mouse(self, x: float, y: float):
-        if self._last_mouse_x is not None and self._last_mouse_y is not None:
-            self.mouse_dx = x - self._last_mouse_x
-            self.mouse_dy = y - self._last_mouse_y
-        else:
-            self.mouse_dx = 0.0
-            self.mouse_dy = 0.0
-        self.mouse_x = x
-        self.mouse_y = y
-        self._last_mouse_x = x
-        self._last_mouse_y = y
-
-    def reset_mouse_delta(self):
-        self.mouse_dx = 0.0
-        self.mouse_dy = 0.0
+        elif key == dpg.mvKey_I:
+            self.key_i = state
+        elif key == dpg.mvKey_J:
+            self.key_j = state
+        elif key == dpg.mvKey_K:
+            self.key_k = state
+        elif key == dpg.mvKey_L:
+            self.key_l = state
