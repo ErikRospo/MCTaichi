@@ -9,7 +9,7 @@ from controls import Controls
 
 ti.init(arch=ti.gpu)
 
-from render import img, set_triangles, render
+from render import img, render, set_triangles
 
 np_img = np.zeros((WIDTH * HEIGHT * 4,), dtype=np.float32)
 controls = Controls()
@@ -21,11 +21,14 @@ camera_yaw = 0.0
 
 # Generate triangles (example: random triangles in front of camera)
 N_TRIANGLES = 2000
+
+
 def random_triangles(n):
     verts = np.random.uniform(-1, 1, size=(n, 3, 3)).astype(np.float32)
     verts[..., 2] += 2.5  # Move triangles in front of camera
     colors = np.random.uniform(0.2, 1.0, size=(n, 3)).astype(np.float32)
     return verts, colors
+
 
 verts_np, colors_np = random_triangles(N_TRIANGLES)
 set_triangles(verts_np, colors_np)
@@ -47,7 +50,7 @@ start_time = time.time()
 
 MOVE_SPEED = 2.0
 LOOK_SENSITIVITY = 0.03
-current_time=0.
+current_time = 0.0
 while dpg.is_dearpygui_running():
     last_current_time = current_time
     current_time = time.time() - start_time
@@ -65,19 +68,21 @@ while dpg.is_dearpygui_running():
         camera_pitch += LOOK_SENSITIVITY
     if dpg.is_key_down(dpg.mvKey_K):
         camera_pitch -= LOOK_SENSITIVITY
-    camera_pitch = np.clip(camera_pitch, -np.pi/2 + 0.01, np.pi/2 - 0.01)
+    camera_pitch = np.clip(camera_pitch, -np.pi / 2 + 0.01, np.pi / 2 - 0.01)
 
     # Compute forward, right, and up vectors from camera orientation
-    forward = np.array([
-        np.cos(camera_yaw) * np.cos(camera_pitch),
-        np.sin(camera_pitch),
-        np.sin(camera_yaw) * np.cos(camera_pitch)
-    ], dtype=np.float32)
-    right = np.array([
-        np.sin(camera_yaw - np.pi/2),
-        0.0,
-        np.cos(camera_yaw - np.pi/2)
-    ], dtype=np.float32)
+    forward = np.array(
+        [
+            np.cos(camera_yaw) * np.cos(camera_pitch),
+            np.sin(camera_pitch),
+            np.sin(camera_yaw) * np.cos(camera_pitch),
+        ],
+        dtype=np.float32,
+    )
+    right = np.array(
+        [np.sin(camera_yaw - np.pi / 2), 0.0, np.cos(camera_yaw - np.pi / 2)],
+        dtype=np.float32,
+    )
     up = np.cross(right, forward)
     up = up / np.linalg.norm(up)
 

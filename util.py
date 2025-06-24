@@ -25,7 +25,9 @@ def get_rotation_matrix(pitch: float, yaw: float):
 
 
 @ti.func
-def world_to_screen(point: vec3, camera_pos: vec3, camera_pitch: float, camera_yaw: float) -> vec2:
+def world_to_screen(
+    point: vec3, camera_pos: vec3, camera_pitch: float, camera_yaw: float
+) -> vec2:
     # Camera transform
     rel = point - camera_pos
     rot = get_rotation_matrix(camera_pitch, camera_yaw)

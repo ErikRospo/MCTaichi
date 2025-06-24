@@ -1,5 +1,5 @@
-import taichi as ti
 import numpy as np
+import taichi as ti
 
 from config import HEIGHT, WIDTH
 from taichi_types import vec2, vec3
@@ -12,7 +12,9 @@ MAX_TRIANGLES = 4096
 img = ti.Vector.field(4, dtype=ti.f32, shape=(WIDTH, HEIGHT))
 z_buffer = ti.field(dtype=ti.f32, shape=(WIDTH, HEIGHT))
 # Store triangle vertex positions and colors in SoA fields for performance
-tri_verts = ti.Vector.field(3, dtype=ti.f32, shape=(MAX_TRIANGLES, 3))  # [triangle, vertex]
+tri_verts = ti.Vector.field(
+    3, dtype=ti.f32, shape=(MAX_TRIANGLES, 3)
+)  # [triangle, vertex]
 tri_colors = ti.Vector.field(3, dtype=ti.f32, shape=MAX_TRIANGLES)
 num_triangles = ti.field(dtype=ti.i32, shape=())
 
