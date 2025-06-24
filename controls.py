@@ -12,8 +12,8 @@ class Controls:
         self.key_a = False
         self.key_s = False
         self.key_d = False
-        self.key_e = False
-        self.key_q = False
+        self.key_r = False
+        self.key_f = False
         # Camera rotation keys
         self.key_i = False
         self.key_j = False
@@ -39,10 +39,10 @@ class Controls:
             self.key_s = state
         elif key == dpg.mvKey_D:
             self.key_d = state
-        elif key == dpg.mvKey_E:
-            self.key_e = state
-        elif key == dpg.mvKey_Q:
-            self.key_q = state
+        elif key == dpg.mvKey_R:
+            self.key_r = state
+        elif key == dpg.mvKey_F:
+            self.key_f = state
         elif key == dpg.mvKey_I:
             self.key_i = state
         elif key == dpg.mvKey_J:

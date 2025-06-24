@@ -5,18 +5,21 @@ from taichi_types import vec2, vec3
 
 @ti.func
 def get_rotation_matrix(pitch: float, yaw: float):
-    cy = ti.cos(yaw)
-    sy = ti.sin(yaw)
+    # Standard camera rotation: yaw (Y axis), then pitch (X axis)
     cp = ti.cos(pitch)
     sp = ti.sin(pitch)
+    cy = ti.cos(yaw)
+    sy = ti.sin(yaw)
+    # Yaw (around Y), then pitch (around X)
+    # R = R_yaw @ R_pitch
     m00 = cy
-    m01 = sy * sp
-    m02 = sy * cp
-    m10 = 0.0
+    m01 = 0.0
+    m02 = -sy
+    m10 = sy * sp
     m11 = cp
-    m12 = -sp
-    m20 = -sy
-    m21 = cy * sp
+    m12 = cy * sp
+    m20 = sy * cp
+    m21 = -sp
     m22 = cy * cp
     return ti.Matrix([[m00, m01, m02], [m10, m11, m12], [m20, m21, m22]])
 

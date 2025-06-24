@@ -4,10 +4,11 @@ import taichi as ti
 from config import HEIGHT, WIDTH
 from taichi_types import vec2, vec3
 from triangle import Triangle
-from util import world_to_screen
+from util import get_rotation_matrix, world_to_screen
 
 NUM_TRIANGLES = 3
 img = ti.Vector.field(4, dtype=ti.f32, shape=(WIDTH, HEIGHT))
+z_buffer = ti.field(dtype=ti.f32, shape=(WIDTH, HEIGHT))  # Add z-buffer
 triangles = Triangle.field(shape=NUM_TRIANGLES)
 
 
@@ -78,23 +79,58 @@ def is_triangle_front_facing(triangle, camera_pos, camera_pitch, camera_yaw):
     return area < 0
 
 
+@ti.func
+def barycentric_coords(a, b, c, p):
+    v0 = b - a
+    v1 = c - a
+    v2 = p - a
+    d00 = v0.dot(v0)
+    d01 = v0.dot(v1)
+    d11 = v1.dot(v1)
+    d20 = v2.dot(v0)
+    d21 = v2.dot(v1)
+    denom = d00 * d11 - d01 * d01
+    u = (d11 * d20 - d01 * d21) / denom
+    v = (d00 * d21 - d01 * d20) / denom
+    w = 1.0 - u - v
+    return u, v, w
+
+
 @ti.kernel
-def render(t: float, camera_pos: ti.types.vector(3, ti.f32), camera_pitch: float, camera_yaw: float):
+def render(t: float, camera_pos: vec3, camera_pitch: float, camera_yaw: float):
     for i, j in img:
         img[i, j] = ti.Vector([0.0, 0.0, 0.0, 1.0])
+        z_buffer[i, j] = 1e9  # Clear z-buffer to a large value
+
     for n in range(NUM_TRIANGLES):
         tri = triangles[n]
-        if not is_triangle_front_facing(tri, camera_pos, camera_pitch, camera_yaw):
-            continue
         min_x, max_x, min_y, max_y = get_triangle_bbox(tri, camera_pos, camera_pitch, camera_yaw)
         i0 = int(min_x * WIDTH)
         i1 = int(max_x * WIDTH) + 1
         j0 = int(min_y * HEIGHT)
         j1 = int(max_y * HEIGHT) + 1
         color = tri.color
+
+        # Project triangle vertices to screen and get their z in camera space
+        a2 = world_to_screen(tri.a, camera_pos, camera_pitch, camera_yaw)
+        b2 = world_to_screen(tri.b, camera_pos, camera_pitch, camera_yaw)
+        c2 = world_to_screen(tri.c, camera_pos, camera_pitch, camera_yaw)
+        # Get z in camera space (negative z axis points forward)
+        rel_a = get_rotation_matrix(camera_pitch, camera_yaw) @ (tri.a - camera_pos)
+        rel_b = get_rotation_matrix(camera_pitch, camera_yaw) @ (tri.b - camera_pos)
+        rel_c = get_rotation_matrix(camera_pitch, camera_yaw) @ (tri.c - camera_pos)
+        za = -rel_a.z
+        zb = -rel_b.z
+        zc = -rel_c.z
+
         for i in range(i0, i1):
             for j in range(j0, j1):
                 if 0 <= i < WIDTH and 0 <= j < HEIGHT:
                     uv = vec2([i / WIDTH, j / HEIGHT])
                     if pointInTriangle(tri, uv, camera_pos, camera_pitch, camera_yaw):
-                        img[i, j] = ti.Vector([color.x, color.y, color.z, 1.0])
+                        # Interpolate z using barycentric coordinates
+                        u, v, w = barycentric_coords(a2, b2, c2, uv)
+                        z = u * za + v * zb + w * zc
+                        if z < z_buffer[i, j]:
+                            z_buffer[i, j] = z
+                            img[i, j] = ti.Vector([color.x, color.y, color.z, 1.0])

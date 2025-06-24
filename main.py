@@ -38,7 +38,6 @@ def handle_key_up(sender, app_data):
 
 dpg.create_context()
 dpg.create_viewport(title="MCTaichi", width=WIDTH + 20, height=HEIGHT + 80)
-dpg.show_metrics()
 
 dpg.setup_dearpygui()
 
@@ -70,18 +69,18 @@ while dpg.is_dearpygui_running():
     dt = current_time - last_current_time
 
     # Camera movement
+    # Compute forward and right vectors using yaw and pitch (yaw-pitch order)
     forward = np.array([
-        np.sin(camera_yaw) * np.cos(camera_pitch),
+        np.cos(camera_yaw) * np.cos(camera_pitch),
         np.sin(camera_pitch),
-        -np.cos(camera_yaw) * np.cos(camera_pitch)
+        np.sin(camera_yaw) * np.cos(camera_pitch)
     ], dtype=np.float32)
     right = np.array([
-        np.cos(camera_yaw),
+        np.sin(camera_yaw),
         0.0,
-        np.sin(camera_yaw)
+        -np.cos(camera_yaw)
     ], dtype=np.float32)
     up = np.array([0.0, 1.0, 0.0], dtype=np.float32)
-
 
     move = np.zeros(3, dtype=np.float32)
     if controls.key_w:
@@ -92,9 +91,9 @@ while dpg.is_dearpygui_running():
         move -= right
     if controls.key_d:
         move += right
-    if controls.key_e:
+    if controls.key_r:
         move += up
-    if controls.key_q:
+    if controls.key_f:
         move -= up
     if np.linalg.norm(move) > 0:
         move = move / np.linalg.norm(move)
@@ -102,13 +101,13 @@ while dpg.is_dearpygui_running():
 
     # Camera rotation using IJKL
     if controls.key_j:
-        camera_yaw -= LOOK_SENSITIVITY
-    if controls.key_l:
         camera_yaw += LOOK_SENSITIVITY
+    if controls.key_l:
+        camera_yaw -= LOOK_SENSITIVITY
     if controls.key_i:
-        camera_pitch -= LOOK_SENSITIVITY
-    if controls.key_k:
         camera_pitch += LOOK_SENSITIVITY
+    if controls.key_k:
+        camera_pitch -= LOOK_SENSITIVITY
     camera_pitch = np.clip(camera_pitch, -np.pi/2 + 0.01, np.pi/2 - 0.01)
 
     render(current_time, camera_pos, camera_pitch, camera_yaw)
