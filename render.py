@@ -1,13 +1,15 @@
-import taichi as ti
 import numpy as np
+import taichi as ti
+
 from config import HEIGHT, WIDTH
+from taichi_types import vec2, vec3
 from triangle import Triangle
 from util import world_to_screen
-from taichi_types import vec2, vec3
 
 NUM_TRIANGLES = 3
 img = ti.Vector.field(4, dtype=ti.f32, shape=(WIDTH, HEIGHT))
 triangles = Triangle.field(shape=NUM_TRIANGLES)
+
 
 def init_triangles():
     @ti.kernel
@@ -26,7 +28,9 @@ def init_triangles():
                 c = tmp
             color = vec3([ti.random(), ti.random(), ti.random()])
             triangles[i] = Triangle(a=a, b=b, c=c, color=color)
+
     _init()
+
 
 @ti.func
 def pointInTriangle(triangle, p):
@@ -49,6 +53,7 @@ def pointInTriangle(triangle, p):
         inside = (u >= 0) and (v >= 0) and (u + v <= 1)
     return inside
 
+
 @ti.func
 def get_triangle_bbox(triangle):
     a2 = world_to_screen(triangle.a)
@@ -60,6 +65,7 @@ def get_triangle_bbox(triangle):
     max_y = ti.max(a2.y, b2.y, c2.y)
     return min_x, max_x, min_y, max_y
 
+
 @ti.func
 def is_triangle_front_facing(triangle):
     a2 = world_to_screen(triangle.a)
@@ -67,6 +73,7 @@ def is_triangle_front_facing(triangle):
     c2 = world_to_screen(triangle.c)
     area = (b2.x - a2.x) * (c2.y - a2.y) - (b2.y - a2.y) * (c2.x - a2.x)
     return area < 0
+
 
 @ti.kernel
 def render(t: float):

@@ -1,4 +1,5 @@
 import taichi as ti
+
 from taichi_types import vec3
 
 

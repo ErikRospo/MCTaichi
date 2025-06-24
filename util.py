@@ -1,5 +1,7 @@
 import taichi as ti
+
 from taichi_types import vec2, vec3
+
 
 @ti.func
 def get_rotation_matrix(pitch: float, yaw: float):
@@ -17,6 +19,7 @@ def get_rotation_matrix(pitch: float, yaw: float):
     m21 = cy * sp
     m22 = cy * cp
     return ti.Matrix([[m00, m01, m02], [m10, m11, m12], [m20, m21, m22]])
+
 
 @ti.func
 def world_to_screen(point: vec3) -> vec2:

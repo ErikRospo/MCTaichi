@@ -1,14 +1,15 @@
 import time
+
 import dearpygui.dearpygui as dpg
 import numpy as np
+import taichi as ti
+
 from config import HEIGHT, WIDTH
 from controls import Controls
-import taichi as ti
 
 ti.init(arch=ti.gpu)
 
-from render import img, triangles, render, init_triangles
-
+from render import img, init_triangles, render, triangles
 
 np_img = np.zeros((WIDTH * HEIGHT * 4,), dtype=np.float32)
 controls = Controls()
