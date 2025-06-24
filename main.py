@@ -16,11 +16,13 @@ img = ti.Vector.field(4, dtype=ti.f32, shape=(WIDTH, HEIGHT))
 time_val = ti.field(dtype=ti.f32, shape=())
 vec2 = ti.math.vec2
 
+
 @ti.dataclass
 class Triangle:
     a: vec2
     b: vec2
     c: vec2
+
 
 @ti.func
 def pointInTriangle(triangle: Triangle, p: vec2):
@@ -43,32 +45,24 @@ def pointInTriangle(triangle: Triangle, p: vec2):
         inside = (u >= 0) and (v >= 0) and (u + v <= 1)
     return inside
 
+
 # Number of triangles
 NUM_TRIANGLES = 3
 
 # Taichi field for triangles
 triangles = Triangle.field(shape=NUM_TRIANGLES)
 
+
 # Initialize triangles in normalized coordinates
 @ti.kernel
 def init_triangles():
-    triangles[0] = Triangle(
-        a=vec2([0.2, 0.2]),
-        b=vec2([0.8, 0.2]),
-        c=vec2([0.5, 0.8])
-    )
-    triangles[1] = Triangle(
-        a=vec2([0.3, 0.3]),
-        b=vec2([0.4, 0.7]),
-        c=vec2([0.7, 0.5])
-    )
-    triangles[2] = Triangle(
-        a=vec2([0.6, 0.1]),
-        b=vec2([0.9, 0.2]),
-        c=vec2([0.8, 0.6])
-    )
+    triangles[0] = Triangle(a=vec2([0.2, 0.2]), b=vec2([0.8, 0.2]), c=vec2([0.5, 0.8]))
+    triangles[1] = Triangle(a=vec2([0.3, 0.3]), b=vec2([0.4, 0.7]), c=vec2([0.7, 0.5]))
+    triangles[2] = Triangle(a=vec2([0.6, 0.1]), b=vec2([0.9, 0.2]), c=vec2([0.8, 0.6]))
+
 
 init_triangles()
+
 
 @ti.func
 def get_triangle_bbox(triangle: Triangle):
@@ -77,6 +71,7 @@ def get_triangle_bbox(triangle: Triangle):
     min_y = ti.min(triangle.a.y, triangle.b.y, triangle.c.y)
     max_y = ti.max(triangle.a.y, triangle.b.y, triangle.c.y)
     return min_x, max_x, min_y, max_y
+
 
 @ti.kernel
 def render(t: float):
