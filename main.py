@@ -25,6 +25,7 @@ class Triangle:
     c: vec3
     color: vec3
 
+
 @ti.func
 def get_rotation_matrix(pitch: float, yaw: float):
     # Yaw rotation (around y-axis)
@@ -46,11 +47,9 @@ def get_rotation_matrix(pitch: float, yaw: float):
     m20 = -sy
     m21 = cy * sp
     m22 = cy * cp
-    return ti.Matrix([[m00, m01, m02],
-                      [m10, m11, m12],
-                      [m20, m21, m22]])
+    return ti.Matrix([[m00, m01, m02], [m10, m11, m12], [m20, m21, m22]])
 
-    
+
 @ti.func
 def pointInTriangle(triangle: Triangle, p: vec2):
     # Project triangle vertices to 2D
@@ -86,12 +85,11 @@ NUM_TRIANGLES = 3
 triangles = Triangle.field(shape=NUM_TRIANGLES)
 
 
-
-
 @ti.func
 def world_to_screen(point: vec3) -> vec2:
 
     return vec2([point.x, point.y])
+
 
 # Initialize triangles in normalized 3D coordinates with color
 @ti.kernel
@@ -102,9 +100,9 @@ def init_triangles():
         b = vec3([ti.random(), ti.random(), ti.random()])
         c = vec3([ti.random(), ti.random(), ti.random()])
         # Ensure clockwise winding in screen space
-        a2 =world_to_screen(a)
-        b2 =world_to_screen(b)
-        c2 =world_to_screen(c)
+        a2 = world_to_screen(a)
+        b2 = world_to_screen(b)
+        c2 = world_to_screen(c)
         # Compute signed area (2D cross product)
         area = (b2.x - a2.x) * (c2.y - a2.y) - (b2.y - a2.y) * (c2.x - a2.x)
         # If area > 0, it's counter-clockwise, so swap b and c to make it clockwise
@@ -114,6 +112,7 @@ def init_triangles():
             c = tmp
         color = vec3([ti.random(), ti.random(), ti.random()])
         triangles[i] = Triangle(a=a, b=b, c=c, color=color)
+
 
 init_triangles()
 
@@ -131,8 +130,6 @@ def get_triangle_bbox(triangle: Triangle):
     return min_x, max_x, min_y, max_y
 
 
-
-
 @ti.func
 def is_triangle_front_facing(triangle: Triangle) -> ti.i32:
     # Project triangle vertices to 2D
@@ -143,6 +140,7 @@ def is_triangle_front_facing(triangle: Triangle) -> ti.i32:
     area = (b2.x - a2.x) * (c2.y - a2.y) - (b2.y - a2.y) * (c2.x - a2.x)
     # For clockwise winding, area should be negative (screen y increases down)
     return area < 0
+
 
 @ti.kernel
 def render(t: float):
