@@ -2,7 +2,7 @@ import dearpygui.dearpygui as dpg
 import taichi as ti
 import numpy as np
 import time
-
+from controls import Controls
 ti.init(arch=ti.gpu)
 
 # Image dimensions
@@ -24,10 +24,23 @@ def render(t: ti.f32):
 # Numpy array for DearPyGui texture (flattened)
 np_img = np.zeros((WIDTH * HEIGHT * 4,), dtype=np.float32)
 
+
+
+controls = Controls()
+
+def handle_mouse_down(sender, app_data):
+    controls.set_mb(app_data[0],True)
+
+def handle_mouse_up(sender, app_data):
+    controls.set_mb(app_data[0],False)
+
 dpg.create_context()
 dpg.create_viewport(title='Taichi + DPG Image', width=WIDTH+20, height=HEIGHT+80)
 dpg.setup_dearpygui()
 
+with dpg.handler_registry():
+    dpg.add_mouse_down_handler(callback=handle_mouse_down)
+    dpg.add_mouse_release_handler(callback=handle_mouse_up)
 with dpg.texture_registry():
     texture_id = dpg.add_raw_texture(WIDTH, HEIGHT, np_img)
 
