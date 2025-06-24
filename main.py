@@ -42,7 +42,7 @@ def handle_mouse_up(sender, app_data):
 
 
 dpg.create_context()
-dpg.create_viewport(title="Taichi + DPG Image", width=WIDTH + 20, height=HEIGHT + 80)
+dpg.create_viewport(title="MCTaichi", width=WIDTH + 20, height=HEIGHT + 80)
 dpg.setup_dearpygui()
 
 with dpg.handler_registry():
@@ -51,11 +51,11 @@ with dpg.handler_registry():
 with dpg.texture_registry():
     texture_id = dpg.add_raw_texture(WIDTH, HEIGHT, np_img)
 
-with dpg.window(tag="Primary Window"):
+with dpg.window(tag="mainwindow"):
     dpg.add_image(texture_id)
 
 dpg.show_viewport()
-dpg.set_primary_window("Primary Window", True)
+dpg.set_primary_window("mainwindow", True)
 start_time = time.time()
 
 while dpg.is_dearpygui_running():
