@@ -64,9 +64,13 @@ init_triangles()
 
 MOVE_SPEED = 2.0
 LOOK_SENSITIVITY = 0.002
-
+current_time=0.
 while dpg.is_dearpygui_running():
+    last_current_time = current_time
     current_time = time.time() - start_time
+
+    # Calculate actual dt
+    dt = current_time - last_current_time
 
     # Camera movement
     forward = np.array([
@@ -81,7 +85,6 @@ while dpg.is_dearpygui_running():
     ], dtype=np.float32)
     up = np.array([0.0, 1.0, 0.0], dtype=np.float32)
 
-    dt = 1.0 / 60.0  # Assume fixed timestep for simplicity
 
     move = np.zeros(3, dtype=np.float32)
     if controls.key_w:
