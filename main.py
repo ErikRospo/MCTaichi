@@ -14,14 +14,52 @@ img = ti.Vector.field(4, dtype=ti.f32, shape=(WIDTH, HEIGHT))
 
 # Time variable to be passed to the render kernel
 time_val = ti.field(dtype=ti.f32, shape=())
+vec2 = ti.math.vec2
 
+@ti.dataclass
+class Triangle:
+    a: vec2
+    b: vec2
+    c: vec2
+
+@ti.func
+def pointInTriangle(triangle:Triangle, p: vec2):
+    # Barycentric coordinate method
+    v0 = triangle.c - triangle.a
+    v1 = triangle.b - triangle.a
+    v2 = p - triangle.a
+
+    dot00 = v0.dot(v0)
+    dot01 = v0.dot(v1)
+    dot02 = v0.dot(v2)
+    dot11 = v1.dot(v1)
+    dot12 = v1.dot(v2)
+
+    denom = dot00 * dot11 - dot01 * dot01
+    # Avoid division by zero
+    inside = False
+    if denom != 0:
+        u = (dot11 * dot02 - dot01 * dot12) / denom
+        v = (dot00 * dot12 - dot01 * dot02) / denom
+        inside = (u >= 0) and (v >= 0) and (u + v <= 1)
+    return inside
+
+# Define a triangle in normalized coordinates
+triangle = Triangle(
+    a=vec2([0.2, 0.2]),
+    b=vec2([0.8, 0.2]),
+    c=vec2([0.5, 0.8])
+)
 
 @ti.kernel
 def render(t: float):
     for i, j in img:
-        # Blue channel is dynamic: (sin(t) + 1) / 2
-        blue = (ti.sin(t) + 1.0) * 0.5
-        img[i, j] = ti.Vector([i / WIDTH, j / HEIGHT, blue, 1.0])  # simple gradient
+        uv = vec2([i / WIDTH, j / HEIGHT])
+        if pointInTriangle(triangle,uv):
+            blue = (ti.sin(t) + 1.0) * 0.5
+            img[i, j] = ti.Vector([uv.x, uv.y, blue, 1.0])
+        else:
+            img[i, j] = ti.Vector([0.0, 0.0, 0.0, 1.0])
 
 
 # Numpy array for DearPyGui texture (flattened)
@@ -36,7 +74,7 @@ def handle_mouse_down(sender, app_data):
 
 
 def handle_mouse_up(sender, app_data):
-    controls.set_mb(app_data[0], False)
+    controls.set_mb(app_data, False)
 
 
 dpg.create_context()
