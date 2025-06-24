@@ -17,7 +17,7 @@ time_val = ti.field(dtype=ti.f32, shape=())
 
 
 @ti.kernel
-def render(t: ti.f32):
+def render(t: float):
     for i, j in img:
         # Blue channel is dynamic: (sin(t) + 1) / 2
         blue = (ti.sin(t) + 1.0) * 0.5
