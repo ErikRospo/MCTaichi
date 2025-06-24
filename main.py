@@ -4,13 +4,11 @@ import dearpygui.dearpygui as dpg
 import numpy as np
 import taichi as ti
 
+from config import HEIGHT, WIDTH
 from controls import Controls
 
 ti.init(arch=ti.gpu)
 
-# Image dimensions
-WIDTH = 1080
-HEIGHT = 720
 # Taichi field for RGBA image
 img = ti.Vector.field(4, dtype=ti.f32, shape=(WIDTH, HEIGHT))
 
