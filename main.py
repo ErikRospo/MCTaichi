@@ -23,7 +23,7 @@ class Triangle:
     c: vec2
 
 @ti.func
-def pointInTriangle(triangle:Triangle, p: vec2):
+def pointInTriangle(triangle: Triangle, p: vec2):
     # Barycentric coordinate method
     v0 = triangle.c - triangle.a
     v1 = triangle.b - triangle.a
@@ -36,7 +36,6 @@ def pointInTriangle(triangle:Triangle, p: vec2):
     dot12 = v1.dot(v2)
 
     denom = dot00 * dot11 - dot01 * dot01
-    # Avoid division by zero
     inside = False
     if denom != 0:
         u = (dot11 * dot02 - dot01 * dot12) / denom
@@ -44,22 +43,62 @@ def pointInTriangle(triangle:Triangle, p: vec2):
         inside = (u >= 0) and (v >= 0) and (u + v <= 1)
     return inside
 
-# Define a triangle in normalized coordinates
-triangle = Triangle(
-    a=vec2([0.2, 0.2]),
-    b=vec2([0.8, 0.2]),
-    c=vec2([0.5, 0.8])
-)
+# Number of triangles
+NUM_TRIANGLES = 3
+
+# Taichi field for triangles
+triangles = Triangle.field(shape=NUM_TRIANGLES)
+
+# Initialize triangles in normalized coordinates
+@ti.kernel
+def init_triangles():
+    triangles[0] = Triangle(
+        a=vec2([0.2, 0.2]),
+        b=vec2([0.8, 0.2]),
+        c=vec2([0.5, 0.8])
+    )
+    triangles[1] = Triangle(
+        a=vec2([0.3, 0.3]),
+        b=vec2([0.4, 0.7]),
+        c=vec2([0.7, 0.5])
+    )
+    triangles[2] = Triangle(
+        a=vec2([0.6, 0.1]),
+        b=vec2([0.9, 0.2]),
+        c=vec2([0.8, 0.6])
+    )
+
+init_triangles()
+
+@ti.func
+def get_triangle_bbox(triangle: Triangle):
+    min_x = ti.min(triangle.a.x, triangle.b.x, triangle.c.x)
+    max_x = ti.max(triangle.a.x, triangle.b.x, triangle.c.x)
+    min_y = ti.min(triangle.a.y, triangle.b.y, triangle.c.y)
+    max_y = ti.max(triangle.a.y, triangle.b.y, triangle.c.y)
+    return min_x, max_x, min_y, max_y
 
 @ti.kernel
 def render(t: float):
+    # Clear image
     for i, j in img:
-        uv = vec2([i / WIDTH, j / HEIGHT])
-        if pointInTriangle(triangle,uv):
-            blue = (ti.sin(t) + 1.0) * 0.5
-            img[i, j] = ti.Vector([uv.x, uv.y, blue, 1.0])
-        else:
-            img[i, j] = ti.Vector([0.0, 0.0, 0.0, 1.0])
+        img[i, j] = ti.Vector([0.0, 0.0, 0.0, 1.0])
+    # Render each triangle in its bounding box
+    for n in range(NUM_TRIANGLES):
+        tri = triangles[n]
+        min_x, max_x, min_y, max_y = get_triangle_bbox(tri)
+        # Convert normalized bbox to pixel range
+        i0 = int(min_x * WIDTH)
+        i1 = int(max_x * WIDTH) + 1
+        j0 = int(min_y * HEIGHT)
+        j1 = int(max_y * HEIGHT) + 1
+        for i in range(i0, i1):
+            for j in range(j0, j1):
+                if 0 <= i < WIDTH and 0 <= j < HEIGHT:
+                    uv = vec2([i / WIDTH, j / HEIGHT])
+                    if pointInTriangle(tri, uv):
+                        blue = (ti.sin(t + n) + 1.0) * 0.5
+                        img[i, j] = ti.Vector([uv.x, uv.y, blue, 1.0])
 
 
 # Numpy array for DearPyGui texture (flattened)
