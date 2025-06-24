@@ -85,13 +85,33 @@ NUM_TRIANGLES = 3
 
 triangles = Triangle.field(shape=NUM_TRIANGLES)
 
+
+
+
+@ti.func
+def world_to_screen(point: vec3) -> vec2:
+
+    return vec2([point.x, point.y])
+
 # Initialize triangles in normalized 3D coordinates with color
 @ti.kernel
 def init_triangles():
     for i in range(NUM_TRIANGLES):
+        # Generate three random points
         a = vec3([ti.random(), ti.random(), ti.random()])
         b = vec3([ti.random(), ti.random(), ti.random()])
         c = vec3([ti.random(), ti.random(), ti.random()])
+        # Ensure clockwise winding in screen space
+        a2 =world_to_screen(a)
+        b2 =world_to_screen(b)
+        c2 =world_to_screen(c)
+        # Compute signed area (2D cross product)
+        area = (b2.x - a2.x) * (c2.y - a2.y) - (b2.y - a2.y) * (c2.x - a2.x)
+        # If area > 0, it's counter-clockwise, so swap b and c to make it clockwise
+        if area > 0:
+            tmp = b
+            b = c
+            c = tmp
         color = vec3([ti.random(), ti.random(), ti.random()])
         triangles[i] = Triangle(a=a, b=b, c=c, color=color)
 
@@ -112,10 +132,17 @@ def get_triangle_bbox(triangle: Triangle):
 
 
 
-@ti.func
-def world_to_screen(point: vec3) -> vec2:
 
-    return vec2([point.x, point.y])
+@ti.func
+def is_triangle_front_facing(triangle: Triangle) -> ti.i32:
+    # Project triangle vertices to 2D
+    a2 = world_to_screen(triangle.a)
+    b2 = world_to_screen(triangle.b)
+    c2 = world_to_screen(triangle.c)
+    # Compute signed area (2D cross product)
+    area = (b2.x - a2.x) * (c2.y - a2.y) - (b2.y - a2.y) * (c2.x - a2.x)
+    # For clockwise winding, area should be negative (screen y increases down)
+    return area < 0
 
 @ti.kernel
 def render(t: float):
@@ -125,6 +152,9 @@ def render(t: float):
     # Render each triangle in its bounding box
     for n in range(NUM_TRIANGLES):
         tri = triangles[n]
+        # Backface culling: skip if not front-facing
+        if not is_triangle_front_facing(tri):
+            continue
         min_x, max_x, min_y, max_y = get_triangle_bbox(tri)
         # Convert normalized bbox to pixel range
         i0 = int(min_x * WIDTH)
