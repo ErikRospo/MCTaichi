@@ -47,10 +47,6 @@ def world_to_screen(
     x_proj = rel.x * f / aspect / z
     y_proj = rel.y * f / z
 
-    # Clamp to NDC [-1,1] for robustness
-    x_proj = ti.max(-1.0, ti.min(1.0, x_proj))
-    y_proj = ti.max(-1.0, ti.min(1.0, y_proj))
-    # Map from NDC [-1,1] to screen [0,1]
     screen_x = (x_proj + 1.0) * 0.5
     screen_y = (y_proj + 1.0) * 0.5
     return vec2([screen_x, screen_y])
