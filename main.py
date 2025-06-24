@@ -18,7 +18,6 @@ vec2 = ti.math.vec2
 vec3 = ti.math.vec3
 
 
-
 @ti.dataclass
 class Triangle:
     a: vec3
@@ -26,6 +25,25 @@ class Triangle:
     c: vec3
     color: vec3
 
+@ti.func
+def transform_vector(ihat:vec3,jhat:vec3,khat:vec3,v:vec3)->vec3:
+    return v.x*ihat+v.y*jhat+khat*v
+@ti.func
+def get_basis_vectors(pitch:float,yaw:float):
+    ihat_yaw=vec3([ti.cos(yaw),0,ti.sin(yaw)])
+    jhat_yaw=vec3([0,1,0])
+    khat_yaw=vec3([ti.cos(yaw),0,ti.sin(yaw)])
+    
+    ihat_pitch=vec3([1,0,0])
+    jhat_pitch=vec3([0,ti.cos(yaw),-ti.sin(yaw)])
+    khat_pitch=vec3([0,ti.sin(yaw),ti.cos(yaw)])
+    
+    ihat=transform_vector(ihat_yaw,jhat_yaw,khat_yaw,ihat_pitch)
+    jhat=transform_vector(ihat_yaw,jhat_yaw,khat_yaw,jhat_pitch)
+    khat=transform_vector(ihat_yaw,jhat_yaw,khat_yaw,khat_pitch)
+    return (ihat,jhat,khat)
+
+    
 @ti.func
 def pointInTriangle(triangle: Triangle, p: vec2):
     # Project triangle vertices to 2D
