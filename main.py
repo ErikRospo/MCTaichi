@@ -68,19 +68,30 @@ while dpg.is_dearpygui_running():
     # Calculate actual dt
     dt = current_time - last_current_time
 
-    # Camera movement
-    # Compute forward and right vectors using yaw and pitch (yaw-pitch order)
+    # Camera rotation using IJKL
+    if controls.key_j:
+        camera_yaw += LOOK_SENSITIVITY
+    if controls.key_l:
+        camera_yaw -= LOOK_SENSITIVITY
+    if controls.key_i:
+        camera_pitch += LOOK_SENSITIVITY
+    if controls.key_k:
+        camera_pitch -= LOOK_SENSITIVITY
+    camera_pitch = np.clip(camera_pitch, -np.pi/2 + 0.01, np.pi/2 - 0.01)
+
+    # Compute forward, right, and up vectors from camera orientation
     forward = np.array([
         np.cos(camera_yaw) * np.cos(camera_pitch),
         np.sin(camera_pitch),
         np.sin(camera_yaw) * np.cos(camera_pitch)
     ], dtype=np.float32)
     right = np.array([
-        np.sin(camera_yaw),
+        np.sin(camera_yaw - np.pi/2),
         0.0,
-        -np.cos(camera_yaw)
+        np.cos(camera_yaw - np.pi/2)
     ], dtype=np.float32)
-    up = np.array([0.0, 1.0, 0.0], dtype=np.float32)
+    up = np.cross(right, forward)
+    up = up / np.linalg.norm(up)
 
     move = np.zeros(3, dtype=np.float32)
     if controls.key_w:
@@ -98,17 +109,6 @@ while dpg.is_dearpygui_running():
     if np.linalg.norm(move) > 0:
         move = move / np.linalg.norm(move)
     camera_pos += move * MOVE_SPEED * dt
-
-    # Camera rotation using IJKL
-    if controls.key_j:
-        camera_yaw += LOOK_SENSITIVITY
-    if controls.key_l:
-        camera_yaw -= LOOK_SENSITIVITY
-    if controls.key_i:
-        camera_pitch += LOOK_SENSITIVITY
-    if controls.key_k:
-        camera_pitch -= LOOK_SENSITIVITY
-    camera_pitch = np.clip(camera_pitch, -np.pi/2 + 0.01, np.pi/2 - 0.01)
 
     render(current_time, camera_pos, camera_pitch, camera_yaw)
     img_np = img.to_numpy()
