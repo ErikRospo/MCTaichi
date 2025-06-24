@@ -1,8 +1,11 @@
-import dearpygui.dearpygui as dpg
-import taichi as ti
-import numpy as np
 import time
+
+import dearpygui.dearpygui as dpg
+import numpy as np
+import taichi as ti
+
 from controls import Controls
+
 ti.init(arch=ti.gpu)
 
 # Image dimensions
@@ -14,6 +17,7 @@ img = ti.Vector.field(4, dtype=ti.f32, shape=(WIDTH, HEIGHT))
 # Time variable to be passed to the render kernel
 time_val = ti.field(dtype=ti.f32, shape=())
 
+
 @ti.kernel
 def render(t: ti.f32):
     for i, j in img:
@@ -21,21 +25,24 @@ def render(t: ti.f32):
         blue = (ti.sin(t) + 1.0) * 0.5
         img[i, j] = ti.Vector([i / WIDTH, j / HEIGHT, blue, 1.0])  # simple gradient
 
+
 # Numpy array for DearPyGui texture (flattened)
 np_img = np.zeros((WIDTH * HEIGHT * 4,), dtype=np.float32)
 
 
-
 controls = Controls()
 
+
 def handle_mouse_down(sender, app_data):
-    controls.set_mb(app_data[0],True)
+    controls.set_mb(app_data[0], True)
+
 
 def handle_mouse_up(sender, app_data):
-    controls.set_mb(app_data[0],False)
+    controls.set_mb(app_data[0], False)
+
 
 dpg.create_context()
-dpg.create_viewport(title='Taichi + DPG Image', width=WIDTH+20, height=HEIGHT+80)
+dpg.create_viewport(title="Taichi + DPG Image", width=WIDTH + 20, height=HEIGHT + 80)
 dpg.setup_dearpygui()
 
 with dpg.handler_registry():
