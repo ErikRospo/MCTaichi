@@ -15,21 +15,27 @@ img = ti.Vector.field(4, dtype=ti.f32, shape=(WIDTH, HEIGHT))
 # Time variable to be passed to the render kernel
 time_val = ti.field(dtype=ti.f32, shape=())
 vec2 = ti.math.vec2
+vec3 = ti.math.vec3
+
 
 
 @ti.dataclass
 class Triangle:
-    a: vec2
-    b: vec2
-    c: vec2
-
+    a: vec3
+    b: vec3
+    c: vec3
+    color: vec3
 
 @ti.func
 def pointInTriangle(triangle: Triangle, p: vec2):
-    # Barycentric coordinate method
-    v0 = triangle.c - triangle.a
-    v1 = triangle.b - triangle.a
-    v2 = p - triangle.a
+    # Project triangle vertices to 2D
+    a2 = world_to_screen(triangle.a)
+    b2 = world_to_screen(triangle.b)
+    c2 = world_to_screen(triangle.c)
+    # Barycentric coordinate method in 2D
+    v0 = c2 - a2
+    v1 = b2 - a2
+    v2 = p - a2
 
     dot00 = v0.dot(v0)
     dot01 = v0.dot(v1)
@@ -50,28 +56,41 @@ def pointInTriangle(triangle: Triangle, p: vec2):
 NUM_TRIANGLES = 3
 
 # Taichi field for triangles
+
+
 triangles = Triangle.field(shape=NUM_TRIANGLES)
 
-
-# Initialize triangles in normalized coordinates
+# Initialize triangles in normalized 3D coordinates with color
 @ti.kernel
 def init_triangles():
-    triangles[0] = Triangle(a=vec2([0.2, 0.2]), b=vec2([0.8, 0.2]), c=vec2([0.5, 0.8]))
-    triangles[1] = Triangle(a=vec2([0.3, 0.3]), b=vec2([0.4, 0.7]), c=vec2([0.7, 0.5]))
-    triangles[2] = Triangle(a=vec2([0.6, 0.1]), b=vec2([0.9, 0.2]), c=vec2([0.8, 0.6]))
-
+    for i in range(NUM_TRIANGLES):
+        a = vec3([ti.random(), ti.random(), ti.random()])
+        b = vec3([ti.random(), ti.random(), ti.random()])
+        c = vec3([ti.random(), ti.random(), ti.random()])
+        color = vec3([ti.random(), ti.random(), ti.random()])
+        triangles[i] = Triangle(a=a, b=b, c=c, color=color)
 
 init_triangles()
 
 
 @ti.func
 def get_triangle_bbox(triangle: Triangle):
-    min_x = ti.min(triangle.a.x, triangle.b.x, triangle.c.x)
-    max_x = ti.max(triangle.a.x, triangle.b.x, triangle.c.x)
-    min_y = ti.min(triangle.a.y, triangle.b.y, triangle.c.y)
-    max_y = ti.max(triangle.a.y, triangle.b.y, triangle.c.y)
+    # Project triangle vertices to 2D
+    a2 = world_to_screen(triangle.a)
+    b2 = world_to_screen(triangle.b)
+    c2 = world_to_screen(triangle.c)
+    min_x = ti.min(a2.x, b2.x, c2.x)
+    max_x = ti.max(a2.x, b2.x, c2.x)
+    min_y = ti.min(a2.y, b2.y, c2.y)
+    max_y = ti.max(a2.y, b2.y, c2.y)
     return min_x, max_x, min_y, max_y
 
+
+
+@ti.func
+def world_to_screen(point: vec3) -> vec2:
+
+    return vec2([point.x, point.y])
 
 @ti.kernel
 def render(t: float):
@@ -87,13 +106,13 @@ def render(t: float):
         i1 = int(max_x * WIDTH) + 1
         j0 = int(min_y * HEIGHT)
         j1 = int(max_y * HEIGHT) + 1
+        color = tri.color
         for i in range(i0, i1):
             for j in range(j0, j1):
                 if 0 <= i < WIDTH and 0 <= j < HEIGHT:
                     uv = vec2([i / WIDTH, j / HEIGHT])
                     if pointInTriangle(tri, uv):
-                        blue = (ti.sin(t + n) + 1.0) * 0.5
-                        img[i, j] = ti.Vector([uv.x, uv.y, blue, 1.0])
+                        img[i, j] = ti.Vector([color.x, color.y, color.z, 1.0])
 
 
 # Numpy array for DearPyGui texture (flattened)
