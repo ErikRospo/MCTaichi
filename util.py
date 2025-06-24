@@ -22,21 +22,25 @@ def get_rotation_matrix(pitch: float, yaw: float):
 
 
 @ti.func
-def world_to_screen(point: vec3) -> vec2:
+def world_to_screen(point: vec3, camera_pos: vec3, camera_pitch: float, camera_yaw: float) -> vec2:
+    # Camera transform
+    rel = point - camera_pos
+    rot = get_rotation_matrix(camera_pitch, camera_yaw)
+    rel = rot @ rel
+
     # Perspective projection parameters
     fov = ti.math.radians(60.0)
     aspect = 1.0  # Assume square viewport; adjust if needed
     near = 0.1
     far = 100.0
 
-    # Camera looks down -Z, so flip sign for z
-    z = -point.z
+    z = -rel.z
     if z <= near:
         z = near
 
     f = 1.0 / ti.tan(fov * 0.5)
-    x_proj = point.x * f / aspect / z
-    y_proj = point.y * f / z
+    x_proj = rel.x * f / aspect / z
+    y_proj = rel.y * f / z
 
     # Map from NDC [-1,1] to screen [0,1]
     screen_x = (x_proj + 1.0) * 0.5

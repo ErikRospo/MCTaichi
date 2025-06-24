@@ -18,9 +18,12 @@ def init_triangles():
             a = vec3([ti.random(), ti.random(), ti.random()])
             b = vec3([ti.random(), ti.random(), ti.random()])
             c = vec3([ti.random(), ti.random(), ti.random()])
-            a2 = world_to_screen(a)
-            b2 = world_to_screen(b)
-            c2 = world_to_screen(c)
+            camera_pos = vec3([0.0, 0.0, 0.0])
+            camera_pitch = 0.0
+            camera_yaw = 0.0
+            a2 = world_to_screen(a, camera_pos, camera_pitch, camera_yaw)
+            b2 = world_to_screen(b, camera_pos, camera_pitch, camera_yaw)
+            c2 = world_to_screen(c, camera_pos, camera_pitch, camera_yaw)
             area = (b2.x - a2.x) * (c2.y - a2.y) - (b2.y - a2.y) * (c2.x - a2.x)
             if area > 0:
                 tmp = b
@@ -33,10 +36,10 @@ def init_triangles():
 
 
 @ti.func
-def pointInTriangle(triangle, p):
-    a2 = world_to_screen(triangle.a)
-    b2 = world_to_screen(triangle.b)
-    c2 = world_to_screen(triangle.c)
+def pointInTriangle(triangle, p, camera_pos, camera_pitch, camera_yaw):
+    a2 = world_to_screen(triangle.a, camera_pos, camera_pitch, camera_yaw)
+    b2 = world_to_screen(triangle.b, camera_pos, camera_pitch, camera_yaw)
+    c2 = world_to_screen(triangle.c, camera_pos, camera_pitch, camera_yaw)
     v0 = c2 - a2
     v1 = b2 - a2
     v2 = p - a2
@@ -55,10 +58,10 @@ def pointInTriangle(triangle, p):
 
 
 @ti.func
-def get_triangle_bbox(triangle):
-    a2 = world_to_screen(triangle.a)
-    b2 = world_to_screen(triangle.b)
-    c2 = world_to_screen(triangle.c)
+def get_triangle_bbox(triangle, camera_pos, camera_pitch, camera_yaw):
+    a2 = world_to_screen(triangle.a, camera_pos, camera_pitch, camera_yaw)
+    b2 = world_to_screen(triangle.b, camera_pos, camera_pitch, camera_yaw)
+    c2 = world_to_screen(triangle.c, camera_pos, camera_pitch, camera_yaw)
     min_x = ti.min(a2.x, b2.x, c2.x)
     max_x = ti.max(a2.x, b2.x, c2.x)
     min_y = ti.min(a2.y, b2.y, c2.y)
@@ -67,23 +70,23 @@ def get_triangle_bbox(triangle):
 
 
 @ti.func
-def is_triangle_front_facing(triangle):
-    a2 = world_to_screen(triangle.a)
-    b2 = world_to_screen(triangle.b)
-    c2 = world_to_screen(triangle.c)
+def is_triangle_front_facing(triangle, camera_pos, camera_pitch, camera_yaw):
+    a2 = world_to_screen(triangle.a, camera_pos, camera_pitch, camera_yaw)
+    b2 = world_to_screen(triangle.b, camera_pos, camera_pitch, camera_yaw)
+    c2 = world_to_screen(triangle.c, camera_pos, camera_pitch, camera_yaw)
     area = (b2.x - a2.x) * (c2.y - a2.y) - (b2.y - a2.y) * (c2.x - a2.x)
     return area < 0
 
 
 @ti.kernel
-def render(t: float):
+def render(t: float, camera_pos: ti.types.vector(3, ti.f32), camera_pitch: float, camera_yaw: float):
     for i, j in img:
         img[i, j] = ti.Vector([0.0, 0.0, 0.0, 1.0])
     for n in range(NUM_TRIANGLES):
         tri = triangles[n]
-        if not is_triangle_front_facing(tri):
+        if not is_triangle_front_facing(tri, camera_pos, camera_pitch, camera_yaw):
             continue
-        min_x, max_x, min_y, max_y = get_triangle_bbox(tri)
+        min_x, max_x, min_y, max_y = get_triangle_bbox(tri, camera_pos, camera_pitch, camera_yaw)
         i0 = int(min_x * WIDTH)
         i1 = int(max_x * WIDTH) + 1
         j0 = int(min_y * HEIGHT)
@@ -93,5 +96,5 @@ def render(t: float):
             for j in range(j0, j1):
                 if 0 <= i < WIDTH and 0 <= j < HEIGHT:
                     uv = vec2([i / WIDTH, j / HEIGHT])
-                    if pointInTriangle(tri, uv):
+                    if pointInTriangle(tri, uv, camera_pos, camera_pitch, camera_yaw):
                         img[i, j] = ti.Vector([color.x, color.y, color.z, 1.0])
